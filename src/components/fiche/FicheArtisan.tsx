@@ -5,6 +5,7 @@ import { dateCourte, decimal, fcfa, fourchette } from "@/lib/format";
 import { urlPhoto } from "@/lib/photos";
 import type { Fiche } from "@/lib/types";
 import { BoutonPartager } from "./BoutonPartager";
+import { BoutonEcouterFiche } from "./BoutonEcouterFiche";
 import { Carrousel } from "@/components/Carrousel";
 import { AvisCarte, BandeNonVerifiee, BarreFiche, BasDeFiche, DuoContact, NoteGoogle } from "./Commun";
 
@@ -63,6 +64,15 @@ export function FicheArtisan({ f, message, favori, numeroServiLink, tousAvis, to
 
       <main className="fiche-corps">
         <DuoContact f={f} message={message} />
+        <BoutonEcouterFiche
+          texte={`${f.nom}, ${f.metier} à ${f.quartier ?? "Lomé"}. ${
+            f.verifie
+              ? `Professionnel vérifié sur place par ServiLink le ${dateCourte(f.date_verification)}.`
+              : "Fiche issue de la collecte à confirmer."
+          } ${f.annees_experience ? `${f.annees_experience} ans d'expérience.` : ""} ${
+            f.tarifs[0] ? `Tarif principal : ${f.tarifs[0].service} à partir de ${f.tarifs[0].prix_min ?? ""} francs CFA.` : ""
+          }`}
+        />
         {f.verifie ? (
           <Link href="#verifie" className="bande-verifie">
             <ShieldCheck size={24} fill="currentColor" color="var(--vert)" aria-hidden="true" />Vérifié par ServiLink le {dateCourte(f.date_verification)}<ChevronRight size={20} aria-hidden="true" />
