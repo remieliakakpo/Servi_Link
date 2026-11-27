@@ -17,7 +17,12 @@ const MODULES = [
 ];
 
 export default async function Admin() {
-  if (modeDemo) return <><EnTete titre="Back-office" retour={{ href: "/" }} /><main className="corps"><p className="alerte page">Mode démo : connectez Supabase (.env.local) pour utiliser le back-office.</p></main></>;
+  if (modeDemo) return (
+    <><EnTete titre="Back-office" retour={{ href: "/" }} /><main className="corps"><div className="page" style={{ display: "grid", gap: 12, width: "100%" }}>
+      <p className="alerte">Mode démo : connectez Supabase (.env.local) pour les autres modules du back-office.</p>
+      <OutilsSansBase />
+    </div></main></>
+  );
   const sb = await supabaseServeur();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/admin/connexion");
@@ -28,11 +33,23 @@ export default async function Admin() {
     <EnTete titre="Back-office" retour={{ href: "/" }} />
     <main className="corps"><div className="page" style={{ display: "grid", gap: 12, width: "100%" }}>
       <p className="muet">Connecté : {user.email ?? user.phone} · rôle : <strong>{role ?? "aucun (demandez à un administrateur)"}</strong></p>
+      <OutilsSansBase />
       <ul className="liste">
         {MODULES.map(([m, qui]) => <li key={m} className="carte"><span className="carte-texte"><strong>{m}</strong><p className="muet">{qui} · à venir</p></span></li>)}
       </ul>
       <p><Link href="/">Retour à l&apos;appli</Link></p>
     </div></main>
     </>
+  );
+}
+
+/** Modules déjà utilisables, avec ou sans base. */
+function OutilsSansBase() {
+  return (
+    <ul className="liste">
+      <li className="carte"><Link href="/admin/realisations" className="carte-texte" style={{ textDecoration: "none" }}>
+        <strong>Réalisations des pros</strong><p className="muet">Photos et vidéos reçues sur WhatsApp : rattacher, vérifier, publier</p>
+      </Link></li>
+    </ul>
   );
 }

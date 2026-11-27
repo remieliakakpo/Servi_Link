@@ -27,6 +27,6 @@ export default async function FichePro({ params, searchParams }: Props) {
     numeroServiLink: String(p.whatsapp_servilink), tousAvis: sp.avis === "tous",
   };
   return f.type === "Artisan"
-    ? <FicheArtisan {...commun} toutesPhotos={sp.photos === "toutes"} />
+    ? <FicheArtisan {...commun} />
     : <FicheFournisseur {...commun} />;
 }

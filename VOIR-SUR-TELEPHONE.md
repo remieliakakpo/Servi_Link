@@ -7,7 +7,7 @@ marqués « Pas encore vérifié par ServiLink ». Les prix des matériaux sont 
 ## 1. Préparer l'ordinateur (une seule fois)
 
 1. Installe **Node.js 20 ou plus récent** : https://nodejs.org (version « LTS »).
-2. Dézippe `servilink-code-2026-11-23.zip` dans un dossier, par exemple `Documents/servilink`.
+2. Dézippe `servilink-code-2026-11-27-vitrine-5min.zip` dans un dossier, par exemple `Documents/servilink`.
 3. Ouvre un terminal dans ce dossier (Windows : clic droit dans le dossier > « Ouvrir dans le terminal »), puis tape :
 
 ```
@@ -58,4 +58,28 @@ En mode démo, aucun SMS ni e-mail n'est envoyé : saisis n'importe quel e-mail,
 ## Fichiers livrés avec le zip
 
 - `collecte_google_maps_2026-11-19.csv` : les 409 fiches lues sur tes 5 vidéos (11 recherches). La colonne « Contrôlé à l'œil » dit lesquelles sont dans l'appli ; les autres sont à contrôler avant import.
-- `captures/ecrans-2026-11-23/` : les captures des écrans.
+- `captures/ecrans-2026-11-27/` : les captures des écrans.
+
+## Nouveaux écrans du 27/11 à ouvrir
+
+- `/depannage` : Je suis en panne (aussi depuis la carte de l'accueil)
+- `/depannage/carburant` puis Vérifier, puis Envoyer : la demande part sur WhatsApp
+- `/livreur?…` : écran du livreur (le lien arrive dans le message WhatsApp de la demande)
+- `/livraisons` : Mes livraisons ; `/livraisons/<n°>` : suivi, réception, évaluation, problème
+- `/espace/pro` : Ma fiche professionnelle (services, disponibilité, contacts, horaires, lieu, aperçu, envoi)
+- `/admin/examen?f=…` : examen d'une fiche par l'équipe (le lien arrive dans le message WhatsApp du pro)
+
+## Vitrine (version complète du 27/11)
+
+Essai complet sur un seul téléphone (sans base, les vidéos restent dans le téléphone qui les a ajoutées) :
+
+1. **Côté artisan** : onglet **Vitrine** (au centre de la barre du bas) → **Publier** → **Filmer** (ou Photo, ou la galerie) → choisir Avant / En cours / Terminé si on veut → nom et numéro WhatsApp (demandés une seule fois) → **Envoyer**. On retrouve l'envoi dans **Mes publications** (« En attente »).
+2. **Côté équipe** : ouvrir `/admin/realisations` → onglet **À vérifier** → chercher la fiche du pro → **Publier** (ou Refuser avec un motif). Les médias reçus sur WhatsApp s'ajoutent dans l'onglet **Ajouter**.
+3. **Côté client** : onglet **Vitrine**. Glisser vers le haut = pro suivant, glisser sur le côté = ses autres réalisations, filtres par métier en haut, boutons Fiche / WhatsApp / Appeler / Partager à droite. Les vignettes du bloc « Réalisations » d'une fiche ouvrent aussi la Vitrine sur ce pro.
+
+Avec Supabase : appliquer `supabase/migrations/0004_realisations.sql` (table, fil public `vitrine_public`, bucket « realisations », droits : un pro connecté envoie « à vérifier », seule l'équipe publie). Pour publier depuis l'appli, le pro doit être connecté à son espace.
+
+### Vidéos jusqu'à 5 minutes (mise à jour du 27/11, fin d'après-midi)
+- Le bouton Filmer indique « 5 min au plus » ; une vidéo plus longue est signalée et ne peut pas être envoyée.
+- En 4G, le fil ne charge que la vidéo regardée et prépare juste le début des voisines : rien n'est téléchargé pour les pros plus loin dans le fil.
+- Base : le bucket accepte 200 Mo par fichier (l'offre gratuite de Supabase plafonne à 50 Mo, à prévoir dans le choix de l'offre).

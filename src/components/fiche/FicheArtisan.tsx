@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { CalendarDays, ChevronRight, CircleCheck, House, Images, Info, MapPin, MessageSquareMore, ShieldCheck, Star, Truck, Wrench } from "lucide-react";
+import { CalendarDays, ChevronRight, CircleCheck, House, Info, MapPin, MessageSquareMore, ShieldCheck, Star, Truck, Wrench } from "lucide-react";
 import { IconeMetier } from "@/components/IconeMetier";
 import { dateCourte, decimal, fcfa, fourchette } from "@/lib/format";
 import { urlPhoto } from "@/lib/photos";
+import { mediasFiche } from "@/lib/medias";
+import { BlocRealisations } from "./Realisations";
 import type { Fiche } from "@/lib/types";
 import { BoutonPartager } from "./BoutonPartager";
 import { Carrousel } from "@/components/Carrousel";
 import { AvisCarte, BandeNonVerifiee, BarreFiche, BasDeFiche, DuoContact, NoteGoogle } from "./Commun";
 
-type Props = { f: Fiche; message: string; favori: boolean; numeroServiLink: string; tousAvis: boolean; toutesPhotos: boolean };
+type Props = { f: Fiche; message: string; favori: boolean; numeroServiLink: string; tousAvis: boolean };
 
 /** Ce que ServiLink a vérifié sur place (cases du formulaire de vérification). */
 export function verifications(f: Fiche): string[] {
@@ -27,9 +29,8 @@ const CRITERES = [
   ["reactivite", "Réactivité"], ["note_avis_clients", "Avis des clients"],
 ] as const;
 
-export function FicheArtisan({ f, message, favori, numeroServiLink, tousAvis, toutesPhotos }: Props) {
+export function FicheArtisan({ f, message, favori, numeroServiLink, tousAvis }: Props) {
   const hero = f.photos.find((p) => p.principale)?.chemin ?? f.photo_principale;
-  const references = f.photos.filter((p) => !p.principale);
   const verifs = verifications(f);
   const stats = [
     f.annees_experience != null && `${f.annees_experience} ans d'expérience`,
@@ -106,23 +107,7 @@ export function FicheArtisan({ f, message, favori, numeroServiLink, tousAvis, to
           )}
         </div>}
 
-        {references.length > 0 && (
-          <section className="bloc" aria-labelledby="t-chantiers">
-            <div className="bloc-tete">
-              <h2 id="t-chantiers"><Images size={24} aria-hidden="true" />Chantiers de référence</h2>
-              {references.length > 3 && !toutesPhotos && <Link href="?photos=toutes#t-chantiers">Voir plus <ChevronRight size={20} aria-hidden="true" /></Link>}
-            </div>
-            <ul className="vignettes">
-              {(toutesPhotos ? references : references.slice(0, 3)).map((ph) => (
-                <li key={ph.chemin}><figure style={{ margin: 0 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={urlPhoto(ph.chemin)} alt={ph.legende ?? "Chantier de référence"} loading="lazy" />
-                  {ph.legende && <figcaption>{ph.legende}</figcaption>}
-                </figure></li>
-              ))}
-            </ul>
-          </section>
-        )}
+        <BlocRealisations pro={f} serveur={mediasFiche(f)} />
 
         {f.avis.length > 0 && (
           <section className="bloc" id="avis" aria-labelledby="t-avis">

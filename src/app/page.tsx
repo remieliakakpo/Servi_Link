@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUp, BrickWall, ChevronRight, HardHat, Search, Store } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, BrickWall, ChevronRight, HardHat, Play, Search, Store, TriangleAlert } from "lucide-react";
 import { BarreNav } from "@/components/BarreNav";
 import { ChoixZone } from "@/components/ChoixZone";
 import { EnTetePhoto } from "@/components/EnTete";
@@ -75,6 +75,20 @@ export default async function Accueil() {
             })}
           </ul>
         </section>
+
+        {/* Vitrine : le travail des pros en vidéo */}
+        <Link href="/vitrine" className="carte-vitrine">
+          <span className="carte-vitrine-icone"><Play size={26} fill="currentColor" aria-hidden="true" /></span>
+          <span><strong>Vitrine</strong><small>Le travail des artisans en vidéo, métier par métier</small></span>
+          <ChevronRight size={22} aria-hidden="true" />
+        </Link>
+
+        {/* Dépannage (écrans du 27/11) : carburant livré, crevaison, mécanique */}
+        <Link href="/depannage" className="carte-action carte-panne">
+          <TriangleAlert size={36} strokeWidth={1.6} aria-hidden="true" />
+          <span><strong>Je suis en panne</strong><small>Carburant, crevaison, mécanique</small></span>
+          <ChevronRight size={20} aria-hidden="true" />
+        </Link>
 
         {ciment && (
           <section className="carte-ciment" aria-labelledby="t-ciment">

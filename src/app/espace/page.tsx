@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bookmark, Briefcase, ChevronRight, MessageSquareMore, User } from "lucide-react";
+import { Bookmark, Briefcase, ChevronRight, Fuel, MessageSquareMore, User } from "lucide-react";
 import { EnTete, PiluleRetour } from "@/components/EnTete";
 import { modeDemo, parametres } from "@/lib/donnees";
 import { compteConnecte, idsFavoris } from "@/lib/session";
@@ -32,15 +32,18 @@ export default async function Espace({ searchParams }: { searchParams: Promise<{
             </div>
             <FormulaireConnexion suite={suite?.startsWith("/") ? suite : "/espace"} canalInitial={canal === "email" ? "email" : canal === "sms" || SMS_DISPONIBLE ? "sms" : "email"} smsDisponible={SMS_DISPONIBLE || modeDemo} />
             <hr style={{ border: 0, borderTop: "1.5px solid var(--liseré)", width: "100%", margin: "8px 0" }} />
-            {devenirPro && (
-              // Provisoire : ouvre WhatsApp en attendant l'écran « Devenir professionnel »
-              <a href={devenirPro} className="carte carte-forte" target="_blank" rel="noopener">
-                <Briefcase size={40} color="var(--orange)" strokeWidth={1.6} aria-hidden="true" style={{ flex: "none" }} />
-                <span className="separateur" />
-                <span className="carte-texte"><strong>Devenir professionnel</strong><p>Artisan, fournisseur ou intervenant</p></span>
-                <ChevronRight className="chevron" size={28} aria-hidden="true" />
-              </a>
-            )}
+            <Link href="/espace/pro" className="carte carte-forte">
+              <Briefcase size={40} color="var(--orange)" strokeWidth={1.6} aria-hidden="true" style={{ flex: "none" }} />
+              <span className="separateur" />
+              <span className="carte-texte"><strong>Devenir professionnel</strong><p>Dépannage, livraison de carburant, atelier</p></span>
+              <ChevronRight className="chevron" size={28} aria-hidden="true" />
+            </Link>
+            <Link href="/livraisons" className="carte">
+              <Fuel size={36} color="var(--orange)" strokeWidth={1.6} aria-hidden="true" style={{ flex: "none" }} />
+              <span className="carte-texte"><strong>Mes livraisons</strong><p>Carburant demandé depuis ce téléphone</p></span>
+              <ChevronRight className="chevron" size={24} aria-hidden="true" />
+            </Link>
+            {devenirPro && <a href={devenirPro} className="lien-simple lien-souligne" target="_blank" rel="noopener">Artisan ou fournisseur BTP ? Écrivez-nous</a>}
             <Link href="/" className="lien-simple">Continuer sans compte</Link>
           </div>
           <PiluleRetour href="/" label="Retour" />
@@ -66,6 +69,14 @@ export default async function Espace({ searchParams }: { searchParams: Promise<{
             <MessageSquareMore size={44} strokeWidth={1.6} aria-hidden="true" style={{ flex: "none" }} />
             <span className="carte-texte"><strong>Mes demandes</strong>
               <p>{demandes ? `${demandes} demande${s(demandes)}` : "Aucune demande pour le moment."}</p></span>
+          </Link>
+          <Link href="/livraisons" className="carte">
+            <Fuel size={44} strokeWidth={1.6} aria-hidden="true" style={{ flex: "none" }} />
+            <span className="carte-texte"><strong>Mes livraisons</strong><p>Carburant demandé depuis ce téléphone</p></span>
+          </Link>
+          <Link href="/espace/pro" className="carte">
+            <Briefcase size={44} strokeWidth={1.6} aria-hidden="true" style={{ flex: "none" }} />
+            <span className="carte-texte"><strong>Ma fiche professionnelle</strong><p>Dépannage, livraison de carburant, atelier</p></span>
           </Link>
           <Link href="/espace/favoris" className="carte">
             <Bookmark size={44} strokeWidth={1.6} aria-hidden="true" style={{ flex: "none" }} />

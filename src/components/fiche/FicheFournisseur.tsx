@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Check, ChevronRight, Info, MapPin, MessageSquareMore, Star, Store, Tag, Truck } from "lucide-react";
 import { dateCourte, decimal, fcfa } from "@/lib/format";
 import { urlPhoto } from "@/lib/photos";
+import { mediasFiche } from "@/lib/medias";
+import { BlocRealisations } from "./Realisations";
 import type { Fiche } from "@/lib/types";
 import { Carrousel } from "@/components/Carrousel";
 import { AvisCarte, BandeNonVerifiee, BarreFiche, BasDeFiche, DuoContact, NoteGoogle } from "./Commun";
@@ -102,6 +104,8 @@ export function FicheFournisseur({ f, message, favori, numeroServiLink, tousAvis
             </p>
           </section>
         )}
+
+        <BlocRealisations pro={f} serveur={mediasFiche(f)} />
 
         {f.avis.length > 0 && (
           <section className="bloc" id="avis" aria-labelledby="t-avis">

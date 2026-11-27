@@ -4,7 +4,7 @@ import { COEFFS_V1, type Coefficients } from "./calculateur";
 import { DEMO_FICHES, DEMO_METIERS, DEMO_PRIX, DEMO_QUARTIERS, DEMO_SERIE_CIMENT, DEMO_SPONSO, demoListe } from "./demo";
 import { distanceKm } from "./geo";
 import { supabaseConfigure, supabaseServeur } from "./supabase/server";
-import type { Avis, Fiche, Metier, Photo, PrixMateriau, ProListe, Quartier, Recherche, Tarif } from "./types";
+import type { Avis, Fiche, ItemVitrine, Metier, Photo, PrixMateriau, ProListe, Quartier, RealisationPublique, Recherche, Tarif } from "./types";
 
 // Accès aux données publiques. Tout passe par les vues filtrées et rechercher_annuaire() :
 // le code de l'appli publique ne lit jamais une table directement.
@@ -64,15 +64,16 @@ export const fiche = cache(async (id: string): Promise<Fiche | null> => {
   if (modeDemo) {
     const f = DEMO_FICHES.find((x) => x.id === id);
     const l = demoListe().find((x) => x.id === id);
-    return f && l ? { ...f, ...l, prix: DEMO_PRIX.filter((x) => x.professionnel_id === id) } : null;
+    return f && l ? { ...f, ...l, prix: DEMO_PRIX.filter((x) => x.professionnel_id === id), realisations: [] } : null;
   }
   const sb = await supabaseServeur();
-  const [pro, tarifs, photos, avis, prix] = await Promise.all([
+  const [pro, tarifs, photos, avis, prix, reals] = await Promise.all([
     sb.from("annuaire_public").select("*").eq("id", id).maybeSingle(),
     sb.from("tarifs_public").select("service, unite, prix_min, prix_max, frais_deplacement, date_releve, ancien").eq("professionnel_id", id).order("service"),
     sb.from("photos_public").select("chemin, legende, principale").eq("professionnel_id", id).order("principale", { ascending: false }).order("ordre"),
     sb.from("avis_public").select("id, prenom_client, created_at, commentaire, note").eq("professionnel_id", id).order("created_at", { ascending: false }).limit(30),
     sb.from("prix_materiaux_public").select("*").eq("professionnel_id", id).order("ordre"),
+    sb.from("vitrine_public").select("id, type, chemin, etiquette, legende, publie_le, duree").eq("pro_id", id).order("publie_le", { ascending: false }),
   ]);
   if (pro.error) throw pro.error;
   if (!pro.data) return null;
@@ -86,8 +87,18 @@ export const fiche = cache(async (id: string): Promise<Fiche | null> => {
     prix_depart: t.reduce<number | null>((m, x) => (x.prix_min != null && (m == null || x.prix_min < m) ? x.prix_min : m), null),
     nb_produits: prix.data?.length ?? 0,
     tarifs: t, photos: (photos.data ?? []) as Photo[], avis: (avis.data ?? []) as Avis[], prix: (prix.data ?? []) as PrixMateriau[],
+    realisations: (reals.data ?? []).map(({ chemin, ...r }) => ({ ...r, url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/realisations/${chemin}` })) as RealisationPublique[],
   };
 });
+
+/** Fil de la Vitrine (base branchée) : les publications les plus récentes. En démo, le téléphone fournit le fil. */
+export async function vitrine(): Promise<ItemVitrine[]> {
+  if (modeDemo) return [];
+  const sb = await supabaseServeur();
+  const { data, error } = await sb.from("vitrine_public").select("*").order("publie_le", { ascending: false }).limit(400);
+  if (error) throw error;
+  return (data ?? []).map(({ chemin, ...r }) => ({ ...r, url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/realisations/${chemin}` })) as ItemVitrine[];
+}
 
 /** Trois fiches du même métier, pour une fiche retirée ou expirée. */
 export async function memeMetier(metier: string | null, sauf: string): Promise<ProListe[]> {

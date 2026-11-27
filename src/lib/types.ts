@@ -40,6 +40,17 @@ export type Tarif = {
 
 export type Photo = { chemin: string; legende: string | null; principale?: boolean };
 
+/** Réalisation publiée (photo ou vidéo courte) affichée sur une fiche. */
+export type RealisationPublique = {
+  id: string; type: "photo" | "video"; url: string; etiquette: "avant" | "en_cours" | "termine" | null;
+  legende: string | null; publie_le: string | null; duree: number | null;
+};
+
+/** Une publication du fil Vitrine, avec le pro qu'elle montre. */
+export type ItemVitrine = RealisationPublique & {
+  pro_id: string; pro_nom: string; metier: string; metier_slug: string | null; type_pro: TypePro; lieu: string; reference: string;
+};
+
 export type Avis = { id: number; prenom_client: string | null; created_at: string; commentaire: string | null; note: number | null };
 
 export type Fiche = ProListe & {
@@ -47,6 +58,8 @@ export type Fiche = ProListe & {
   disponibilite: string | null; moyens_paiement: string | null;
   livraison_frais_min: number | null; livraison_delai: string | null;
   tarifs: Tarif[]; photos: Photo[]; avis: Avis[]; prix: PrixMateriau[];
+  /** Photos et vidéos publiées par l'équipe (vue realisations_public). */
+  realisations: RealisationPublique[];
 };
 
 export type PrixMateriau = {

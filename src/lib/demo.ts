@@ -57,7 +57,7 @@ export const DEMO_FICHES: Fiche[] = [...COLLECTE, ...COLLECTE_AUTO.map((r) => ({
     latitude: q?.lat ?? null, longitude: q?.lng ?? null, position_approx: !!q,
     horaires: r.h24 ? "Ouvert 24 h/24" : r.ouvre ? `Ouvre à ${r.ouvre}` : null,
     point_repere: null, langues: null, disponibilite: null, moyens_paiement: null,
-    tarifs: [], photos: [], avis: [], prix: [],
+    tarifs: [], photos: [], avis: [], prix: [], realisations: [],
   };
 });
 
