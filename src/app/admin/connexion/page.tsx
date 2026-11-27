@@ -1,30 +1,18 @@
-import { redirect } from "next/navigation";
-import { supabaseServeur } from "@/lib/supabase/server";
+import Link from "next/link";
 import { EnTete } from "@/components/EnTete";
 
 export const metadata = { title: "Connexion équipe", robots: { index: false } };
 
-// Connexion de l'équipe par e-mail et mot de passe (comptes créés par l'administrateur dans Supabase).
-// La double authentification des administrateurs (TOTP Supabase) est prévue au module Équipe.
-async function connecter(form: FormData) {
-  "use server";
-  const sb = await supabaseServeur();
-  const { error } = await sb.auth.signInWithPassword({ email: String(form.get("email")), password: String(form.get("mdp")) });
-  redirect(error ? "/admin/connexion?erreur=1" : "/admin");
-}
-
-export default async function Connexion({ searchParams }: { searchParams: Promise<{ erreur?: string }> }) {
-  const { erreur } = await searchParams;
+// L'équipe se connecte comme tout le monde : avec son e-mail et un code reçu par e-mail (pas de mot de passe à retenir).
+// L'accès au back-office dépend ensuite du rôle donné par un administrateur (page Équipe).
+export default function Connexion() {
   return (
     <>
     <EnTete titre="Connexion de l’équipe" retour={{ href: "/" }} />
-    <main className="corps"><div className="page" style={{ width: "100%" }}>
-      {erreur && <p className="alerte">E-mail ou mot de passe incorrect.</p>}
-      <form action={connecter} style={{ display: "grid", gap: 12 }}>
-        <label style={{ display: "grid", gap: 6 }}>E-mail<input className="champ" name="email" type="email" autoComplete="username" required /></label>
-        <label style={{ display: "grid", gap: 6 }}>Mot de passe<input className="champ" name="mdp" type="password" autoComplete="current-password" required /></label>
-        <button className="bouton bouton-orange" type="submit">Se connecter</button>
-      </form>
+    <main className="corps"><div className="page" style={{ display: "grid", gap: 14 }}>
+      <p>Connectez-vous avec votre adresse e-mail : vous recevez un code à 6 chiffres.</p>
+      <Link href="/espace?canal=email&suite=/admin" className="bouton bouton-orange bouton-plein">Recevoir mon code</Link>
+      <p className="muet">Première fois ? Après votre connexion, donnez votre adresse e-mail à l&apos;administrateur pour qu&apos;il vous ajoute à l&apos;équipe.</p>
     </div></main>
     </>
   );

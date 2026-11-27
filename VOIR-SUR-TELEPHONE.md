@@ -7,7 +7,7 @@ marqués « Pas encore vérifié par ServiLink ». Les prix des matériaux sont 
 ## 1. Préparer l'ordinateur (une seule fois)
 
 1. Installe **Node.js 20 ou plus récent** : https://nodejs.org (version « LTS »).
-2. Dézippe `servilink-code-2026-11-27-vitrine-5min.zip` dans un dossier, par exemple `Documents/servilink`.
+2. Dézippe `servilink-code-2026-11-27-lancement.zip` dans un dossier, par exemple `Documents/servilink`.
 3. Ouvre un terminal dans ce dossier (Windows : clic droit dans le dossier > « Ouvrir dans le terminal »), puis tape :
 
 ```
@@ -83,3 +83,26 @@ Avec Supabase : appliquer `supabase/migrations/0004_realisations.sql` (table, fi
 - Le bouton Filmer indique « 5 min au plus » ; une vidéo plus longue est signalée et ne peut pas être envoyée.
 - En 4G, le fil ne charge que la vidéo regardée et prépare juste le début des voisines : rien n'est téléchargé pour les pros plus loin dans le fil.
 - Base : le bucket accepte 200 Mo par fichier (l'offre gratuite de Supabase plafonne à 50 Mo, à prévoir dans le choix de l'offre).
+
+### Corrections du 27/11 au soir
+- **Vitrine, visiteur** : en haut, « Pour toi » (tout le fil ; « Voir d'abord les pros près de moi » les classe par distance) et « Métiers » (filtres). L'en-tête reste fixe pendant le défilement. La loupe ouvre l'annuaire, le « + » ouvre l'espace pro.
+- **Vitrine, professionnel** : « + » → Espace pro avec deux onglets, **Publier** et **Mes publications** (chaque envoi montre ses étapes : Envoyée, En vérification, En ligne, ou Refusée avec le motif).
+- **Logo** : « Servi » blanc (ou anthracite sur fond clair) et « Link » orange, avec le trait orange, sur toutes les pages.
+- **Métiers ajoutés** : Aluminium et vitrerie, Staffeur / plafonds, Aménagement et jardin (en plus de Décoration intérieure). Base : relancer `supabase/seed.sql`.
+
+## Nouveau dans cette version (lancement)
+
+- Pages « introuvable » et « un souci est survenu » avec boutons pour repartir.
+- Adresse `/api/sante` : répond « ok » si le serveur et la base vont bien (à brancher sur une alerte).
+- Vitrine : les photos sont allégées avant l'envoi, chaque vidéo a son image de couverture, bouton « Signaler »,
+  et en ligne (avec Supabase) les grosses vidéos reprennent leur envoi si la 4G coupe.
+- Tests : `npm test` (code) et `npm run test:sql` (base, il faut PostgreSQL 16).
+
+## Nouveau (retours du 27/11 au soir)
+
+- Publier : boutons « Mes vidéos » et « Mes photos » qui ouvrent la galerie du téléphone.
+- Tous écrans : plus rien ne déborde de 320 px aux grands téléphones, même en grande police.
+- Estimation : 12 ouvrages (fondation, poteaux, chaînage, dalle, dallage, chape, crépissage, carrelage, peinture, pavés, murs, clôture).
+- Base : migrations `0005_securite.sql` (limites anti-robots) et `0006_equipe.sql` (comptes de l'équipe) à exécuter après 0004.
+- Vidéos chez Bunny Stream et comptes des collaborateurs : suivre le guide « ServiLink : brancher Supabase, Bunny et Vercel ». Variables dans `.env.example`.
+- Ce qu'il faut configurer avant d'ouvrir au public et l'entretien mensuel sont dans le document « ServiLink : version de lancement ».

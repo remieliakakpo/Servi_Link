@@ -13,7 +13,7 @@ export default async function Vitrine({ searchParams }: Props) {
   const metier = sp.metier && liste.some((m) => m.slug === sp.metier) ? sp.metier : undefined;
   return (
     <>
-      <Fil serveur={items} metiers={liste} metierDepart={metier} proDepart={sp.pro?.slice(0, 20)} indexDepart={Math.max(0, Number(sp.i) || 0)} />
+      <Fil serveur={items} metiers={liste.filter((m) => m.slug !== "mecanicien")} metierDepart={metier} proDepart={sp.pro?.slice(0, 20)} indexDepart={Math.max(0, Number(sp.i) || 0)} />
       <BarreNav sombre />
     </>
   );

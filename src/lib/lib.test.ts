@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculer, listeTexte } from "./calculateur";
+import { calculer, COEFFS_V1, listeTexte } from "./calculateur";
 import { dateCourte, fcfa, fourchette, telephone, numeroInternational } from "./format";
 import { ecartPourcent, fraicheur } from "./prix";
 import { lienWhatsApp, remplir } from "./whatsapp";
@@ -41,6 +41,30 @@ describe("whatsapp", () => {
       "https://wa.me/22890123456?text=" + encodeURIComponent("Bonjour Kossi, je vous contacte via ServiLink (fiche ID-001)."),
     );
     expect(lienWhatsApp(null, msg)).toBeNull();
+  });
+});
+
+describe("calculateur : autres ouvrages", () => {
+  it("12 poteaux 20 × 20 de 3 m en HA12", () => {
+    const r = calculer({ ouvrage: "poteaux", nombre: 12, hauteur_m: 3, section: "20x20", diametre: "HA12" });
+    // 1,44 m³ : ciment 504 kg × 1,05 / 50 = 10,6 -> 11 sacs ; fer 187,2 kg × 1,05 / (0,888 × 12) = 18,4 -> 19 barres
+    expect(r.volume_m3).toBe(1.44);
+    expect(r.ciment_sacs).toBe(11);
+    expect(r.fer_barres).toBe(19);
+  });
+  it("carrelage 20 m² : carreaux avec 10 % de coupes, colle en sacs de 25 kg", () => {
+    const r = calculer({ ouvrage: "carrelage", surface_m2: 20 });
+    expect(r.autres.map((a) => [a.materiau, a.quantite])).toEqual([["Carreaux", 22], ["Colle à carrelage", 5], ["Joint", 9]]);
+    expect(listeTexte(r)).toContain("Carreaux : 22 m²");
+  });
+  it("peinture 60 m² en 2 couches", () => {
+    const r = calculer({ ouvrage: "peinture", surface_m2: 60, couches: 2 });
+    expect(r.autres[0].quantite).toBe(13); // 12 L × 1,05 = 12,6 -> 13 L
+    expect(r.ciment_sacs).toBe(0);
+  });
+  it("anciennes versions en base sans les nouveaux coefficients", () => {
+    const { beton_arme: _, ...ancien } = COEFFS_V1;
+    expect(calculer({ ouvrage: "chainage", longueur_m: 10, section: "20x30", diametre: "HA10" }, ancien).ciment_sacs).toBeGreaterThan(0);
   });
 });
 

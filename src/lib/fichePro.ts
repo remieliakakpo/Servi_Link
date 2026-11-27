@@ -37,7 +37,7 @@ export const FICHE_VIDE: FichePro = {
 
 const CLE = "slk-fiche-pro";
 export function lireFiche(): FichePro {
-  try { return { ...FICHE_VIDE, ...JSON.parse(localStorage.getItem(CLE) ?? "{}") }; } catch { return FICHE_VIDE; }
+  try { return assainirFiche(JSON.parse(localStorage.getItem(CLE) ?? "{}")); } catch { return FICHE_VIDE; }
 }
 export function ecrireFiche(f: FichePro) {
   try { localStorage.setItem(CLE, JSON.stringify(f)); } catch { /* stockage indisponible */ }
@@ -64,11 +64,39 @@ export function encoderFiche(f: FichePro): string {
   let bin = ""; json.forEach((b) => (bin += String.fromCharCode(b)));
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
+/**
+ * Sécurité : une fiche lue depuis un lien ou le téléphone est une donnée extérieure.
+ * On ne garde que les champs attendus, du bon type et de taille raisonnable.
+ */
+export function assainirFiche(o: unknown): FichePro {
+  const x = (o && typeof o === "object" ? o : {}) as Record<string, unknown>;
+  const txt = (v: unknown, max: number, def = "") => (typeof v === "string" ? v.slice(0, max) : def);
+  const bool = (v: unknown, def: boolean) => (typeof v === "boolean" ? v : def);
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && Math.abs(v) <= 180 ? v : undefined);
+  const heureOk = (v: unknown, def: string) => (typeof v === "string" && /^\d{2}:\d{2}$/.test(v) ? v : def);
+  const services = Array.isArray(x.services) ? x.services.filter((s): s is Service => SERVICES.some((t) => t.cle === s)) : [];
+  const horaires = FICHE_VIDE.horaires.map((d, i) => {
+    const h = Array.isArray(x.horaires) ? (x.horaires[i] as Record<string, unknown> | undefined) : undefined;
+    return h && typeof h === "object" ? { ouvert: bool(h.ouvert, d.ouvert), de: heureOk(h.de, d.de), a: heureOk(h.a, d.a) } : d;
+  });
+  const statuts: StatutFiche[] = ["brouillon", "envoyee", "correction", "conforme"];
+  return {
+    nom: txt(x.nom, 80), presentation: txt(x.presentation, 300), services,
+    quartiers: Array.isArray(x.quartiers) ? x.quartiers.filter((q): q is string => typeof q === "string").map((q) => q.slice(0, 60)).slice(0, 30) : [],
+    disponible: bool(x.disponible, true), appel: bool(x.appel, true), telephone: txt(x.telephone, 20),
+    whatsapp: bool(x.whatsapp, true), memeNumero: bool(x.memeNumero, true), numeroWhatsapp: txt(x.numeroWhatsapp, 20),
+    horaires, surPlace: typeof x.surPlace === "boolean" ? x.surPlace : null,
+    quartier: txt(x.quartier, 60), repere: txt(x.repere, 120), lat: num(x.lat), lng: num(x.lng),
+    statut: statuts.includes(x.statut as StatutFiche) ? (x.statut as StatutFiche) : "brouillon",
+    correction: typeof x.correction === "string" ? x.correction.slice(0, 300) : undefined,
+  };
+}
+
 export function decoderFiche(s: string | undefined): FichePro | null {
-  if (!s) return null;
+  if (!s || s.length > 8000) return null;
   try {
     const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/"));
     const o = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
-    return typeof o?.nom === "string" ? { ...FICHE_VIDE, ...o, statut: "envoyee" } : null;
+    return typeof o?.nom === "string" ? { ...assainirFiche(o), statut: "envoyee" } : null;
   } catch { return null; }
 }

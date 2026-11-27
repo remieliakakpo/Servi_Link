@@ -12,7 +12,10 @@ insert into metiers (slug, libelle, type, ordre) values
   ('peintre',          'Peintre bâtiment',      'Artisan', 80),
   ('soudeur',          'Soudeur / ferronnier',  'Artisan', 90),
   ('toiture',          'Couvreur (toiture)',    'Artisan', 92),
+  ('vitrier',          'Aluminium et vitrerie', 'Artisan', 93),
   ('decoration',       'Décoration intérieure', 'Artisan', 94),
+  ('staffeur',         'Staffeur / plafonds',   'Artisan', 95),
+  ('amenagement',      'Aménagement et jardin', 'Artisan', 97),
   ('architecte',       'Architecte',            'Artisan', 96),
   ('mecanicien',       'Mécanicien auto',       'Artisan', 98),
   ('materiaux',        'Matériaux de construction', 'Fournisseur', 105),
@@ -59,7 +62,13 @@ insert into parametres_calculateur (version, actif, notes, coefficients) values 
     "fer_dalle":    { "kg_par_m3": 80 },
     "fer_kg_par_m": { "HA8": 0.395, "HA10": 0.617, "HA12": 0.888 },
     "barre_m": 12,
-    "sac_kg": 50
+    "sac_kg": 50,
+    "beton_arme":   { "ciment_kg_m3": 350, "sable_m3_par_m3": 0.45, "gravier_m3_par_m3": 0.85, "fer_kg_m3": { "fondation": 50, "poteau": 130, "poutre": 110 } },
+    "beton_sol":    { "ciment_kg_m3": 300, "sable_m3_par_m3": 0.45, "gravier_m3_par_m3": 0.85 },
+    "chape":        { "ciment_kg_m3": 350, "sable_m3_par_m3": 1.1 },
+    "carrelage":    { "pertes": 0.1, "colle_kg_m2": 5, "sac_colle_kg": 25, "joint_kg_m2": 0.4 },
+    "peinture":     { "m2_par_litre": 10, "seau_l": 20 },
+    "paves":        { "par_m2": 40, "sable_m3_par_m2": 0.05 }
   }'::jsonb)
 on conflict (version) do nothing;
 

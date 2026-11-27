@@ -1,58 +1,132 @@
 "use client";
-import { ListeChoix } from "@/components/ListeChoix";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Box, BrickWall, Layers, Mountain, Package, Ruler, Scale, type LucideIcon } from "lucide-react";
-import { calculer, listeTexte, type Coefficients, type Entrees, type Resultat } from "@/lib/calculateur";
+import {
+  Box, BrickWall, Columns3, Fence, Grid2x2, House, Layers, LayoutGrid, Mountain, Package, PaintRoller, PanelTop, Rows3, Ruler,
+  Scale, Shovel, Square, type LucideIcon,
+} from "lucide-react";
+import { calculer, listeTexte, SECTIONS, type Coefficients, type Diametre, type Entrees, type Epaisseur, type Resultat, type Section } from "@/lib/calculateur";
 import { compter, rpcPublique } from "@/lib/compter";
 
 type Props = { version: number; coefficients: Coefficients; modeleMessage: string };
 type Ouvrage = Entrees["ouvrage"];
 
-const OUVRAGES: Record<Ouvrage, { label: string; Icone: LucideIcon }> = {
-  mur_cloture: { label: "Mur de clôture", Icone: BrickWall },
-  piece: { label: "Murs d'une pièce", Icone: BrickWall },
-  dalle: { label: "Dalle", Icone: Layers },
+/** Les ouvrages, dans l'ordre d'un chantier : du sol au toit, puis les finitions. */
+const OUVRAGES: { cle: Ouvrage; label: string; Icone: LucideIcon; groupe: "Gros œuvre" | "Sols et finitions" }[] = [
+  { cle: "fondation", label: "Fondation", Icone: Shovel, groupe: "Gros œuvre" },
+  { cle: "poteaux", label: "Poteaux", Icone: Columns3, groupe: "Gros œuvre" },
+  { cle: "piece", label: "Murs d'une pièce", Icone: House, groupe: "Gros œuvre" },
+  { cle: "mur_cloture", label: "Mur de clôture", Icone: Fence, groupe: "Gros œuvre" },
+  { cle: "chainage", label: "Chaînage, poutre", Icone: PanelTop, groupe: "Gros œuvre" },
+  { cle: "dalle", label: "Dalle", Icone: Layers, groupe: "Gros œuvre" },
+  { cle: "dallage", label: "Dallage au sol", Icone: Square, groupe: "Sols et finitions" },
+  { cle: "chape", label: "Chape", Icone: Rows3, groupe: "Sols et finitions" },
+  { cle: "enduit", label: "Crépissage", Icone: BrickWall, groupe: "Sols et finitions" },
+  { cle: "carrelage", label: "Carrelage", Icone: Grid2x2, groupe: "Sols et finitions" },
+  { cle: "peinture", label: "Peinture", Icone: PaintRoller, groupe: "Sols et finitions" },
+  { cle: "paves", label: "Pavés", Icone: LayoutGrid, groupe: "Sols et finitions" },
+];
+
+type Champ = [cle: string, label: string, unite: string];
+const CHAMPS: Record<Ouvrage, Champ[]> = {
+  fondation: [["longueur", "Longueur", "m"], ["largeur_cm", "Largeur", "cm"], ["profondeur", "Hauteur", "cm"]],
+  poteaux: [["nombre", "Nombre", ""], ["hauteur", "Hauteur", "m"]],
+  piece: [["longueur", "Longueur", "m"], ["largeur", "Largeur", "m"], ["hauteur", "Hauteur", "m"], ["ouvertures", "Ouvertures", "m²"]],
+  mur_cloture: [["longueur", "Longueur", "m"], ["hauteur", "Hauteur", "m"], ["ouvertures", "Portail", "m²"]],
+  chainage: [["longueur", "Longueur totale", "m"]],
+  dalle: [["longueur", "Longueur", "m"], ["largeur", "Largeur", "m"], ["epaisseur", "Épaisseur", "cm"]],
+  dallage: [["longueur", "Longueur", "m"], ["largeur", "Largeur", "m"], ["epaisseur", "Épaisseur", "cm"]],
+  chape: [["longueur", "Longueur", "m"], ["largeur", "Largeur", "m"], ["epaisseur", "Épaisseur", "cm"]],
+  enduit: [["surface", "Surface de mur", "m²"]],
+  carrelage: [["surface", "Surface", "m²"]],
+  peinture: [["surface", "Surface de mur", "m²"]],
+  paves: [["surface", "Surface", "m²"]],
+};
+/** Valeurs proposées au départ pour chaque ouvrage (courantes au Togo). */
+const DEPART: Record<Ouvrage, Record<string, string>> = {
+  fondation: { longueur: "40", largeur_cm: "40", profondeur: "30" },
+  poteaux: { nombre: "12", hauteur: "3" },
+  piece: { longueur: "4", largeur: "4", hauteur: "3", ouvertures: "3" },
+  mur_cloture: { longueur: "20", hauteur: "2", ouvertures: "0" },
+  chainage: { longueur: "40" },
+  dalle: { longueur: "5", largeur: "4", epaisseur: "15" },
+  dallage: { longueur: "5", largeur: "4", epaisseur: "10" },
+  chape: { longueur: "5", largeur: "4", epaisseur: "4" },
+  enduit: { surface: "50" },
+  carrelage: { surface: "20" },
+  peinture: { surface: "60" },
+  paves: { surface: "50" },
 };
 
-const CHAMPS: Record<Ouvrage, [string, string][]> = {
-  mur_cloture: [["longueur", "Longueur (m)"], ["hauteur", "Hauteur (m)"], ["ouvertures", "Ouvertures (m²)"]],
-  piece: [["longueur", "Longueur (m)"], ["largeur", "Largeur (m)"], ["hauteur", "Hauteur (m)"], ["ouvertures", "Ouvertures (m²)"]],
-  dalle: [["longueur", "Longueur (m)"], ["largeur", "Largeur (m)"], ["epaisseur", "Épaisseur (cm)"]],
-};
-
-const nb = (s: string) => Number(s.replace(",", "."));
+const nb = (s: string | undefined) => Number((s ?? "").replace(",", "."));
 const fr = (n: number) => n.toLocaleString("fr-FR");
 
+function Choix<T extends string | number>({ titre, valeur, options, choisir }: { titre: string; valeur: T; options: [T, string][]; choisir: (v: T) => void }) {
+  return (
+    <div className="calc-choix" role="radiogroup" aria-label={titre}>
+      <span>{titre}</span>
+      <div>
+        {options.map(([v, l]) => (
+          <button key={String(v)} type="button" role="radio" aria-checked={valeur === v} onClick={() => choisir(v)}>{l}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Calculateur({ version, coefficients, modeleMessage }: Props) {
-  const [ouvrage, setOuvrage] = useState<Ouvrage>("mur_cloture");
-  const [v, setV] = useState<Record<string, string>>({ longueur: "10", largeur: "4", hauteur: "2", ouvertures: "2", epaisseur: "15" });
+  const [ouvrage, setOuvrage] = useState<Ouvrage>("piece");
+  const [v, setV] = useState<Record<string, string>>(DEPART.piece);
+  const [agglo, setAgglo] = useState<Epaisseur>("15");
+  const [faces, setFaces] = useState<0 | 1 | 2>(0);
+  const [fer, setFer] = useState<Diametre>("HA10");
+  const [section, setSection] = useState<Section>("20x20");
+  const [couches, setCouches] = useState<1 | 2 | 3>(2);
   const [resultat, setResultat] = useState<{ r: Resultat; e: Entrees } | null>(null);
   const [partage, setPartage] = useState<"" | "en_cours">("");
 
-  // Options pas encore dans la maquette : agglos de 15, sans enduit, fer HA10
-  const entrees: Entrees = useMemo(() => {
-    if (ouvrage === "dalle") return { ouvrage, longueur_m: nb(v.longueur), largeur_m: nb(v.largeur), epaisseur_cm: nb(v.epaisseur), diametre: "HA10" };
-    if (ouvrage === "piece") return { ouvrage, longueur_m: nb(v.longueur), largeur_m: nb(v.largeur), hauteur_m: nb(v.hauteur), ouvertures_m2: nb(v.ouvertures), epaisseur: "15", enduit_faces: 0 };
-    return { ouvrage, longueur_m: nb(v.longueur), hauteur_m: nb(v.hauteur), ouvertures_m2: nb(v.ouvertures), epaisseur: "15", enduit_faces: 0 };
-  }, [ouvrage, v]);
+  function changerOuvrage(o: Ouvrage) {
+    setOuvrage(o); setV(DEPART[o]); setResultat(null);
+    if (o === "poteaux") setSection("20x20");
+    if (o === "chainage") setSection("20x30");
+    if (o === "enduit") setFaces(2);
+    setFer(o === "poteaux" ? "HA12" : o === "dalle" || o === "chainage" ? "HA10" : "HA12");
+  }
+  const raz = <T,>(f: (x: T) => void) => (x: T) => { f(x); setResultat(null); };
+
+  const entrees: Entrees = useMemo((): Entrees => {
+    switch (ouvrage) {
+      case "piece": return { ouvrage, longueur_m: nb(v.longueur), largeur_m: nb(v.largeur), hauteur_m: nb(v.hauteur), ouvertures_m2: nb(v.ouvertures), epaisseur: agglo, enduit_faces: faces };
+      case "mur_cloture": return { ouvrage, longueur_m: nb(v.longueur), hauteur_m: nb(v.hauteur), ouvertures_m2: nb(v.ouvertures), epaisseur: agglo, enduit_faces: faces };
+      case "dalle": return { ouvrage, longueur_m: nb(v.longueur), largeur_m: nb(v.largeur), epaisseur_cm: nb(v.epaisseur), diametre: fer };
+      case "fondation": return { ouvrage, longueur_m: nb(v.longueur), largeur_cm: nb(v.largeur_cm), profondeur_cm: nb(v.profondeur), diametre: fer };
+      case "poteaux": return { ouvrage, nombre: nb(v.nombre), hauteur_m: nb(v.hauteur), section, diametre: fer };
+      case "chainage": return { ouvrage, longueur_m: nb(v.longueur), section, diametre: fer };
+      case "dallage": return { ouvrage, longueur_m: nb(v.longueur), largeur_m: nb(v.largeur), epaisseur_cm: nb(v.epaisseur) };
+      case "chape": return { ouvrage, longueur_m: nb(v.longueur), largeur_m: nb(v.largeur), epaisseur_cm: nb(v.epaisseur) };
+      case "enduit": return { ouvrage, surface_m2: nb(v.surface), enduit_faces: faces === 0 ? 1 : faces };
+      case "carrelage": return { ouvrage, surface_m2: nb(v.surface) };
+      case "paves": return { ouvrage, surface_m2: nb(v.surface) };
+      case "peinture": return { ouvrage, surface_m2: nb(v.surface), couches };
+    }
+  }, [ouvrage, v, agglo, faces, fer, section, couches]);
 
   function estimer(ev: React.FormEvent) {
     ev.preventDefault();
     setResultat({ r: calculer(entrees, coefficients), e: entrees });
     compter("calcul", ouvrage);
+    setTimeout(() => document.getElementById("resultat")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
-  // « Partager ma liste » : enregistre le calcul pour obtenir un code SLK (sans réseau : sans code),
-  // puis ouvre le partage du téléphone, ou WhatsApp à défaut.
+  // « Partager ma liste » : enregistre le calcul pour obtenir un code SLK, puis ouvre le partage du téléphone (WhatsApp à défaut)
   async function partager() {
     if (!resultat) return;
     setPartage("en_cours");
     let code = "à attribuer";
     try {
       code = await rpcPublique<string>("enregistrer_calcul", { p_version: version, p_type_ouvrage: resultat.e.ouvrage, p_entrees: resultat.e, p_resultats: resultat.r });
-    } catch { /* hors connexion ou mode démo */ }
-    const texte = `${modeleMessage.replace("{code}", code)}\n${listeTexte(resultat.r)}`;
+    } catch { /* hors connexion */ }
+    const texte = `${modeleMessage.replace("{code}", code)}\n${nomOuvrage(resultat.e.ouvrage)}\n${listeTexte(resultat.r)}`;
     setPartage("");
     try {
       if (navigator.share) return await navigator.share({ text: texte });
@@ -60,73 +134,98 @@ export function Calculateur({ version, coefficients, modeleMessage }: Props) {
     window.location.href = `https://wa.me/?text=${encodeURIComponent(texte)}`;
   }
 
-  const marge = `marge de ${Math.round(coefficients.marge_pertes * 100)} %`;
   const r = resultat?.r;
-  const lignes: { titre: string; valeur: string; details: string[]; Icone: LucideIcon; materiau: string }[] = r ? [
-    ...(r.agglos ? [{ titre: "Agglos à prévoir", valeur: `${fr(r.agglos)} blocs`, Icone: Box, materiau: "Agglos",
-      details: [`${fr(r.surface_m2)} m² de mur · ${marge}`, ...(coefficients.agglo.format ? [`Format de pose : ${coefficients.agglo.format}`] : [])] }] : []),
-    ...(r.ciment_sacs ? [{ titre: "Ciment à prévoir", valeur: `${r.ciment_sacs} sac${r.ciment_sacs > 1 ? "s" : ""}`, Icone: Package, materiau: "Ciment",
-      details: [`Sacs de ${coefficients.sac_kg} kg · ${marge}`, r.volume_m3 ? `${fr(r.volume_m3)} m³ de béton` : "Mortier de pose"] }] : []),
-    ...(r.fer_barres ? [{ titre: "Fer à prévoir", valeur: `${r.fer_barres} barres`, Icone: Ruler, materiau: "Fer à béton",
-      details: [`${r.fer_diametre} de ${coefficients.barre_m} m · ${marge}`] }] : []),
-    ...(r.sable_m3 ? [{ titre: "Sable à prévoir", valeur: `${fr(r.sable_m3)} m³`, Icone: Mountain, materiau: "Sable", details: [marge] }] : []),
-    ...(r.gravier_m3 ? [{ titre: "Gravier à prévoir", valeur: `${fr(r.gravier_m3)} m³`, Icone: Mountain, materiau: "Gravier", details: [marge] }] : []),
+  const lignes: { materiau: string; valeur: string; detail: string; Icone: LucideIcon; prix?: string }[] = r ? [
+    ...(r.ciment_sacs ? [{ materiau: "Ciment", valeur: `${fr(r.ciment_sacs)} sac${r.ciment_sacs > 1 ? "s" : ""}`, detail: `de ${coefficients.sac_kg} kg`, Icone: Package, prix: "Ciment" }] : []),
+    ...(r.agglos ? [{ materiau: "Agglos", valeur: `${fr(r.agglos)}`, detail: `de ${agglo} · ${fr(r.surface_m2)} m² de mur`, Icone: Box, prix: "Agglos" }] : []),
+    ...(r.fer_barres ? [{ materiau: "Fer à béton", valeur: `${fr(r.fer_barres)} barres`, detail: `${r.fer_diametre} de ${coefficients.barre_m} m`, Icone: Ruler, prix: "Fer à béton" }] : []),
+    ...(r.sable_m3 ? [{ materiau: "Sable", valeur: `${fr(r.sable_m3)} m³`, detail: "", Icone: Mountain, prix: "Sable" }] : []),
+    ...(r.gravier_m3 ? [{ materiau: "Gravier", valeur: `${fr(r.gravier_m3)} m³`, detail: "", Icone: Mountain, prix: "Gravier" }] : []),
+    ...r.autres.filter((a) => a.quantite > 0).map((a) => ({ materiau: a.materiau, valeur: `${fr(a.quantite)} ${a.unite}`, detail: a.detail, Icone: a.materiau === "Pavés" ? LayoutGrid : a.materiau.startsWith("Carreaux") ? Grid2x2 : a.materiau.includes("einture") || a.materiau.includes("ouche") ? PaintRoller : Package })),
   ] : [];
-  const { Icone: IconeOuvrage } = OUVRAGES[ouvrage];
+  const avecFer = ouvrage === "dalle" || ouvrage === "fondation" || ouvrage === "poteaux" || ouvrage === "chainage";
+  const avecAgglos = ouvrage === "piece" || ouvrage === "mur_cloture";
 
   return (
-    <div className="page" style={{ display: "grid", gap: 16, width: "100%" }}>
-      <form onSubmit={estimer} style={{ display: "grid", gap: 16 }}>
-        <p className="champ-titre">Ouvrage</p>
-        <div className="selecteur-tuile">
-          <span className="tuile tuile-sombre"><IconeOuvrage size={40} strokeWidth={1.6} aria-hidden="true" /></span>
-          <ListeChoix className="selecteur" valeur={ouvrage} aria-label="Ouvrage"
-            onChoix={(k) => { setOuvrage(k as Ouvrage); setResultat(null); }}
-            options={Object.entries(OUVRAGES).map(([k, o]) => ({ value: k, label: o.label }))} />
-        </div>
-        <div className="trois-champs">
-          {CHAMPS[ouvrage].map(([cle, label]) => (
-            <label key={cle}>{label}
-              <input className="champ" inputMode="decimal" value={v[cle]} onChange={(e) => { setV({ ...v, [cle]: e.target.value }); setResultat(null); }} />
+    <div className="page calc" style={{ display: "grid", gap: 16, width: "100%" }}>
+      <form onSubmit={estimer} className="calc-form">
+        <fieldset className="calc-ouvrages">
+          <legend className="champ-titre">Que voulez-vous construire ?</legend>
+          {(["Gros œuvre", "Sols et finitions"] as const).map((g) => (
+            <div key={g} className="calc-groupe">
+              <span className="calc-groupe-titre">{g}</span>
+              <div className="calc-tuiles" role="radiogroup" aria-label={g}>
+                {OUVRAGES.filter((o) => o.groupe === g).map(({ cle, label, Icone }) => (
+                  <button key={cle} type="button" role="radio" aria-checked={ouvrage === cle} className="calc-tuile" onClick={() => changerOuvrage(cle)}>
+                    <Icone size={26} strokeWidth={1.7} aria-hidden="true" />{label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </fieldset>
+
+        <div className="calc-champs">
+          {CHAMPS[ouvrage].map(([cle, label, unite]) => (
+            <label key={cle}>
+              <span>{label}</span>
+              <span className="calc-saisie">
+                <input className="champ" inputMode="decimal" value={v[cle] ?? ""} maxLength={7}
+                  onChange={(e) => { setV({ ...v, [cle]: e.target.value.replace(/[^\d.,]/g, "") }); setResultat(null); }} />
+                {unite && <em>{unite}</em>}
+              </span>
             </label>
           ))}
         </div>
-        <button className="bouton bouton-orange bouton-plein" type="submit">Estimer les quantités</button>
+
+        {avecAgglos && <Choix titre="Agglos" valeur={agglo} choisir={raz(setAgglo)} options={[["15", "de 15"], ["20", "de 20"]]} />}
+        {(avecAgglos || ouvrage === "enduit") && (
+          <Choix titre="Crépissage" valeur={faces} choisir={raz(setFaces)}
+            options={ouvrage === "enduit" ? [[1, "1 face"], [2, "2 faces"]] : [[0, "Sans"], [1, "1 face"], [2, "2 faces"]]} />
+        )}
+        {(ouvrage === "poteaux" || ouvrage === "chainage") && (
+          <Choix titre="Section (cm)" valeur={section} choisir={raz(setSection)} options={SECTIONS.map((s) => [s, s.replace("x", " × ")])} />
+        )}
+        {avecFer && <Choix titre="Fer" valeur={fer} choisir={raz(setFer)} options={[["HA8", "HA8"], ["HA10", "HA10"], ["HA12", "HA12"]]} />}
+        {ouvrage === "peinture" && <Choix titre="Couches" valeur={couches} choisir={raz(setCouches)} options={[[1, "1"], [2, "2"], [3, "3"]]} />}
+
+        <button className="bouton bouton-orange bouton-plein" type="submit">Calculer</button>
       </form>
 
       {r && (
-        <>
-          <div aria-live="polite" style={{ display: "grid", gap: 12 }}>
-            {lignes.length === 0 && <p className="alerte">Saisissez des dimensions pour obtenir une estimation.</p>}
-            {lignes.map((l) => (
-              <section key={l.titre} className="carte resultat">
-                <h2>{l.titre}</h2>
-                <span className="tuile tuile-grande tuile-sombre"><l.Icone size={52} strokeWidth={1.5} aria-hidden="true" /></span>
-                <div>
-                  <span className="resultat-valeur">{l.valeur}</span>
-                  {l.details.map((d) => <p key={d}>{d}</p>)}
-                </div>
-              </section>
-            ))}
-          </div>
+        <section id="resultat" className="carte calc-resultat" aria-live="polite">
+          <h2>{nomOuvrage(ouvrage)} : à acheter</h2>
+          {lignes.length === 0 ? <p className="alerte">Saisissez des dimensions pour obtenir une estimation.</p> : (
+            <ul>
+              {lignes.map((l) => (
+                <li key={l.materiau}>
+                  <span className="calc-icone"><l.Icone size={22} aria-hidden="true" /></span>
+                  <span className="calc-mat"><strong>{l.materiau}</strong>{l.detail && <small>{l.detail}</small>}</span>
+                  <span className="calc-qte">{l.valeur}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           {lignes.length > 0 && (
             <>
-              {/* Hypothèses et marge d'erreur exigées par le cahier des charges (V1-05) : présentation provisoire */}
               <details className="muet">
-                <summary style={{ cursor: "pointer", minHeight: 44 }}>Hypothèses du calcul (estimation à ± 10 %)</summary>
+                <summary>Comment c&apos;est calculé (à ± 10 %)</summary>
                 <ul>{r.hypotheses.map((h) => <li key={h}>{h}</li>)}</ul>
-                <p>Formules version {version}, en cours de validation par un ingénieur.</p>
               </details>
-              <Link href={`/prix?m=${encodeURIComponent(lignes[0].materiau)}`} className="bouton bouton-contour bouton-plein">
-                <Scale size={28} aria-hidden="true" />Comparer les prix
-              </Link>
-              <button type="button" className="lien-simple lien-orange lien-souligne" onClick={partager} disabled={partage === "en_cours"}>
-                {partage ? "Préparation…" : "Partager ma liste"}
-              </button>
+              <div className="duo-actions">
+                <Link href={`/prix?m=${encodeURIComponent(lignes.find((l) => l.prix)?.prix ?? "Ciment")}`} className="bouton bouton-contour">
+                  <Scale size={20} aria-hidden="true" />Comparer les prix
+                </Link>
+                <button type="button" className="bouton bouton-orange" onClick={partager} disabled={partage === "en_cours"}>
+                  {partage ? "Préparation…" : "Partager ma liste"}
+                </button>
+              </div>
             </>
           )}
-        </>
+        </section>
       )}
     </div>
   );
 }
+
+const nomOuvrage = (o: Ouvrage) => OUVRAGES.find((x) => x.cle === o)?.label ?? "";

@@ -52,9 +52,8 @@ export default async function Prix({ searchParams }: { searchParams: Promise<{ m
           {variante && (
             <>
               <div style={{ marginTop: 8 }}>
-                <h2 style={{ fontSize: "1.6rem" }}>{lignes.length} fournisseur{lignes.length > 1 ? "s" : ""}</h2>
+                <h2 className="titre-liste">{lignes.length} {lignes.some((l) => l.exemple) ? "point" : "fournisseur"}{lignes.length > 1 ? "s" : ""}{lignes.some((l) => l.exemple) ? " de vente" : ""}</h2>
                 <p className="muet" style={{ margin: "4px 0 0" }}>Prix en magasin · hors livraison</p>
-                {lignes.some((l) => l.exemple) && <p className="info" style={{ marginTop: 8 }}>Prix d&apos;exemple : les relevés chez les fournisseurs n&apos;ont pas encore commencé.</p>}
               </div>
               <ul className="liste">
                 {lignes.map((l) => (

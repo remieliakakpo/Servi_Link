@@ -1,7 +1,7 @@
 // Service worker ServiLink (V1-06) : consultation hors connexion.
 // Pages : réseau d'abord, copie en cache sinon (dernières fiches vues, prix, calculateur).
 // Fichiers _next/static : cache d'abord (ils changent de nom à chaque version).
-const VERSION = "slk-v1";
+const VERSION = "slk-v2";
 const A_PRECHARGER = ["/", "/prix", "/calculateur", "/hors-ligne"];
 const MAX_PAGES = 40;
 

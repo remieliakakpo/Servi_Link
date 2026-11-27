@@ -1,3 +1,4 @@
+import { urlMedia } from "./urlMedia";
 import "server-only";
 import { cache } from "react";
 import { COEFFS_V1, type Coefficients } from "./calculateur";
@@ -73,7 +74,7 @@ export const fiche = cache(async (id: string): Promise<Fiche | null> => {
     sb.from("photos_public").select("chemin, legende, principale").eq("professionnel_id", id).order("principale", { ascending: false }).order("ordre"),
     sb.from("avis_public").select("id, prenom_client, created_at, commentaire, note").eq("professionnel_id", id).order("created_at", { ascending: false }).limit(30),
     sb.from("prix_materiaux_public").select("*").eq("professionnel_id", id).order("ordre"),
-    sb.from("vitrine_public").select("id, type, chemin, etiquette, legende, publie_le, duree").eq("pro_id", id).order("publie_le", { ascending: false }),
+    sb.from("vitrine_public").select("id, type, chemin, vignette, etiquette, legende, publie_le, duree").eq("pro_id", id).order("publie_le", { ascending: false }),
   ]);
   if (pro.error) throw pro.error;
   if (!pro.data) return null;
@@ -87,9 +88,10 @@ export const fiche = cache(async (id: string): Promise<Fiche | null> => {
     prix_depart: t.reduce<number | null>((m, x) => (x.prix_min != null && (m == null || x.prix_min < m) ? x.prix_min : m), null),
     nb_produits: prix.data?.length ?? 0,
     tarifs: t, photos: (photos.data ?? []) as Photo[], avis: (avis.data ?? []) as Avis[], prix: (prix.data ?? []) as PrixMateriau[],
-    realisations: (reals.data ?? []).map(({ chemin, ...r }) => ({ ...r, url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/realisations/${chemin}` })) as RealisationPublique[],
+    realisations: (reals.data ?? []).map(({ chemin, vignette, ...r }) => ({ ...r, url: urlMedia(chemin), vignette: vignette ? urlMedia(vignette) : null })) as RealisationPublique[],
   };
 });
+
 
 /** Fil de la Vitrine (base branchée) : les publications les plus récentes. En démo, le téléphone fournit le fil. */
 export async function vitrine(): Promise<ItemVitrine[]> {
@@ -97,7 +99,12 @@ export async function vitrine(): Promise<ItemVitrine[]> {
   const sb = await supabaseServeur();
   const { data, error } = await sb.from("vitrine_public").select("*").order("publie_le", { ascending: false }).limit(400);
   if (error) throw error;
-  return (data ?? []).map(({ chemin, ...r }) => ({ ...r, url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/realisations/${chemin}` })) as ItemVitrine[];
+  const qs = await quartiers();
+  return (data ?? []).map(({ chemin, vignette, ...r }) => {
+    // Sans GPS, le pro est placé au centre de son quartier (comme sur la carte de l'annuaire)
+    const q = r.lat == null ? qs.find((x) => x.nom === r.lieu) : undefined;
+    return { ...r, lat: r.lat ?? q?.lat ?? null, lng: r.lng ?? q?.lng ?? null, url: urlMedia(chemin), vignette: vignette ? urlMedia(vignette) : null };
+  }) as ItemVitrine[];
 }
 
 /** Trois fiches du même métier, pour une fiche retirée ou expirée. */

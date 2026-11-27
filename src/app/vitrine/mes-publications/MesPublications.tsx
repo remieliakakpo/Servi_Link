@@ -1,18 +1,31 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Camera, CircleCheck, Clock, CircleX } from "lucide-react";
+import { Camera, Check, Eye, X } from "lucide-react";
 import { Vignette } from "@/components/fiche/Realisations";
 import { dateLongue } from "@/lib/depannage";
-import { mesEnvois, type Realisation } from "@/lib/realisations";
+import { mesEnvois, texteEtiquette, type Realisation } from "@/lib/realisations";
 
-const STATUT = {
-  a_verifier: { texte: "En attente", Icone: Clock, ton: "orange" },
-  en_ligne: { texte: "En ligne", Icone: CircleCheck, ton: "vert" },
-  refusee: { texte: "Refusée", Icone: CircleX, ton: "gris" },
-} as const;
+/** Les étapes d'une publication : envoyée, vérifiée par ServiLink, en ligne (ou refusée, avec le motif). */
+function Etapes({ r }: { r: Realisation }) {
+  const refusee = r.statut === "refusee", enLigne = r.statut === "en_ligne";
+  const etapes = [
+    { texte: "Envoyée", etat: "fait" },
+    { texte: refusee ? "Refusée" : enLigne ? "Vérifiée" : "En vérification", etat: refusee ? "refus" : enLigne ? "fait" : "encours" },
+    { texte: "En ligne", etat: enLigne ? "fait" : "afaire" },
+  ];
+  return (
+    <ol className="etapes-pub">
+      {etapes.map((e) => (
+        <li key={e.texte} className={e.etat}>
+          <span>{e.etat === "fait" ? <Check size={14} strokeWidth={3} aria-hidden="true" /> : e.etat === "refus" ? <X size={14} strokeWidth={3} aria-hidden="true" /> : null}</span>{e.texte}
+        </li>
+      ))}
+    </ol>
+  );
+}
 
-/** Ce que le pro a publié depuis l'appli, avec la réponse de ServiLink. */
+/** Ce que le pro a publié depuis l'appli, avec l'étape où en est chaque publication. */
 export function MesPublications() {
   const [liste, setListe] = useState<Realisation[] | null>(null);
   useEffect(() => { mesEnvois().then(setListe).catch(() => setListe([])); }, []);
@@ -26,19 +39,18 @@ export function MesPublications() {
   return (
     <div className="publier">
       <ul className="mes-publications">
-        {liste.map((r) => {
-          const s = STATUT[r.statut];
-          return (
-            <li key={r.id}>
-              {r.statut === "en_ligne" && r.pro
-                ? <Link href={`/vitrine?pro=${r.pro.id}`}><Vignette m={r} /></Link>
-                : <Vignette m={r} />}
-              <span className={`pastille-statut pastille-${s.ton}`}><s.Icone size={14} aria-hidden="true" />{s.texte}</span>
-              <small>{dateLongue(r.recu_le)}</small>
-              {r.statut === "refusee" && r.motif && <small className="motif">{r.motif}</small>}
-            </li>
-          );
-        })}
+        {liste.map((r) => (
+          <li key={r.id}>
+            <Vignette m={r} />
+            <div className="mes-publications-texte">
+              <strong>{r.type === "video" ? "Vidéo" : "Photo"}{r.etiquette && ` · ${texteEtiquette(r.etiquette)}`}</strong>
+              <small>Envoyée le {dateLongue(r.recu_le)}</small>
+              <Etapes r={r} />
+              {r.statut === "refusee" && r.motif && <small className="motif">Motif : {r.motif}</small>}
+              {r.statut === "en_ligne" && r.pro && <Link href={`/vitrine?pro=${r.pro.id}`} className="lien-orange voir-vitrine"><Eye size={16} aria-hidden="true" />Voir dans la Vitrine</Link>}
+            </div>
+          </li>
+        ))}
       </ul>
       <Link href="/vitrine/publier" className="bouton vitrine-bouton bouton-plein"><Camera size={22} aria-hidden="true" />Publier une autre</Link>
     </div>

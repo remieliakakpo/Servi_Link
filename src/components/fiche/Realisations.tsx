@@ -22,7 +22,10 @@ export function Vignette({ m, className = "" }: { m: Media; className?: string }
   return (
     <span className={`vignette-media ${className}`}>
       {m.type === "video"
-        ? <video src={`${m.url}#t=0.1`} preload="metadata" muted playsInline aria-hidden="true" />
+        ? m.vignette
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={m.vignette} alt="" loading="lazy" />
+          : <video src={`${m.url}#t=0.1`} preload="metadata" muted playsInline aria-hidden="true" />
         // eslint-disable-next-line @next/next/no-img-element
         : <img src={m.url} alt="" loading="lazy" />}
       {m.etiquette && <span className="etiquette-media">{texteEtiquette(m.etiquette)}</span>}

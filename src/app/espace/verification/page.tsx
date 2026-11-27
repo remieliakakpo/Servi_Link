@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EnTete, PiluleRetour } from "@/components/EnTete";
-import { modeDemo } from "@/lib/donnees";
 import { SaisieCode } from "./SaisieCode";
 
 export const metadata = { title: "Vérification", robots: { index: false } };
@@ -22,9 +21,8 @@ export default async function Verification({ searchParams }: { searchParams: Pro
         sousTitre={canal === "email" ? "Confirmez votre adresse e-mail." : "Confirmez votre numéro de téléphone."} />
       <main className="corps">
         <div className="page" style={{ display: "grid", gap: 16, width: "100%" }}>
-          <h2 style={{ fontSize: "1.8rem" }}>Saisissez votre code</h2>
+          <h2 className="titre-ecran">Saisissez votre code</h2>
           <p style={{ margin: 0, fontSize: "1.1rem" }}>Code à 6 chiffres envoyé à<br /><strong>{masquer(canal, d)}</strong></p>
-          {modeDemo && <p className="alerte">Mode démo : aucun message n&apos;est envoyé, le code est 123456.</p>}
           <SaisieCode canal={canal} destination={d} suite={suite ?? "/espace"} />
           <Link href={`/espace?canal=${canal}`} className="lien-simple lien-souligne">
             {canal === "email" ? "Modifier mon adresse e-mail" : "Modifier mon numéro"}

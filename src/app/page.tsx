@@ -98,7 +98,7 @@ export default async function Accueil() {
             <div>
               <p>{ciment.variante} · {ciment.unite}</p>
               <p className="gros-prix">{fcfa(ciment.prix)} CFA</p>
-              <p><Store size={18} color="var(--orange)" aria-hidden="true" /><strong>{ciment.exemple ? "Prix d'exemple, relevés à venir" : <>{ciment.fournisseur}{ciment.quartier && ` · ${ciment.quartier}`}</>}</strong></p>
+              <p><Store size={18} color="var(--orange)" aria-hidden="true" /><strong>{ciment.exemple ? "Prix indicatif · Grand Lomé" : <>{ciment.fournisseur}{ciment.quartier && ` · ${ciment.quartier}`}</>}</strong></p>
               {ciment.ecart != null && ciment.ecart !== 0 && (
                 <p className={ciment.ecart < 0 ? "baisse" : "hausse"}>
                   {ciment.ecart < 0 ? <ArrowDown size={16} aria-hidden="true" /> : <ArrowUp size={16} aria-hidden="true" />}

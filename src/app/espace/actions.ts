@@ -8,7 +8,8 @@ import { COOKIE_DEMO, COOKIE_DEMO_FAVORIS, compteConnecte, idsFavoris } from "@/
 import { supabaseServeur } from "@/lib/supabase/server";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const suiteSure = (s: unknown) => (typeof s === "string" && s.startsWith("/") && !s.startsWith("//") ? s : "/espace");
+// Chemin interne seulement : refuse « //site », « /\site » (lu comme //site par les navigateurs) et les caractères invisibles
+const suiteSure = (s: unknown) => (typeof s === "string" && /^\/(?![\/\\])[^\s\\]{0,200}$/.test(s) ? s : "/espace");
 
 /** Étape 1 : envoyer un code à 6 chiffres par e-mail ou par SMS (Supabase Auth, sans mot de passe). */
 export async function envoyerCode(_: unknown, form: FormData): Promise<{ erreur?: string }> {

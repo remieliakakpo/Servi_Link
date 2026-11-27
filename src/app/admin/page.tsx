@@ -19,7 +19,7 @@ const MODULES = [
 export default async function Admin() {
   if (modeDemo) return (
     <><EnTete titre="Back-office" retour={{ href: "/" }} /><main className="corps"><div className="page" style={{ display: "grid", gap: 12, width: "100%" }}>
-      <p className="alerte">Mode démo : connectez Supabase (.env.local) pour les autres modules du back-office.</p>
+      <p className="alerte">Base de données pas encore branchée : seuls les outils ci-dessous fonctionnent pour l'instant.</p>
       <OutilsSansBase />
     </div></main></>
   );
@@ -27,13 +27,24 @@ export default async function Admin() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/admin/connexion");
   const { data: role } = await sb.rpc("mon_role");
-  if (!role) redirect("/espace"); // un compte client n'a rien à faire ici
+  if (!role) return (
+    <><EnTete titre="Back-office" retour={{ href: "/" }} /><main className="corps"><div className="page" style={{ display: "grid", gap: 12, width: "100%" }}>
+      <p className="info">Vous êtes connecté avec <strong>{user.email ?? user.phone}</strong>, mais ce compte ne fait pas encore partie de l&apos;équipe.</p>
+      <p>Donnez cette adresse à l&apos;administrateur de ServiLink : il vous ajoute depuis la page Équipe, puis rouvrez cette page.</p>
+      <p><Link href="/">Retour à l&apos;appli</Link></p>
+    </div></main></>
+  );
   return (
     <>
     <EnTete titre="Back-office" retour={{ href: "/" }} />
     <main className="corps"><div className="page" style={{ display: "grid", gap: 12, width: "100%" }}>
       <p className="muet">Connecté : {user.email ?? user.phone} · rôle : <strong>{role ?? "aucun (demandez à un administrateur)"}</strong></p>
       <OutilsSansBase />
+      {role === "admin" && (
+        <ul className="liste"><li className="carte"><Link href="/admin/equipe" className="carte-texte" style={{ textDecoration: "none" }}>
+          <strong>Équipe</strong><p className="muet">Ajouter un collaborateur avec son e-mail, choisir son rôle, retirer un accès</p>
+        </Link></li></ul>
+      )}
       <ul className="liste">
         {MODULES.map(([m, qui]) => <li key={m} className="carte"><span className="carte-texte"><strong>{m}</strong><p className="muet">{qui} · à venir</p></span></li>)}
       </ul>

@@ -18,7 +18,10 @@ export const DEMO_METIERS: Metier[] = [
   { slug: "peintre", libelle: "Peintre bâtiment", type: "Artisan" },
   { slug: "toiture", libelle: "Couvreur (toiture)", type: "Artisan" },
   { slug: "soudeur", libelle: "Soudeur / ferronnier", type: "Artisan" },
+  { slug: "vitrier", libelle: "Aluminium et vitrerie", type: "Artisan" },
   { slug: "decoration", libelle: "Décoration intérieure", type: "Artisan" },
+  { slug: "staffeur", libelle: "Staffeur / plafonds", type: "Artisan" },
+  { slug: "amenagement", libelle: "Aménagement et jardin", type: "Artisan" },
   { slug: "architecte", libelle: "Architecte", type: "Artisan" },
   { slug: "mecanicien", libelle: "Mécanicien auto", type: "Artisan" },
   { slug: "materiaux", libelle: "Matériaux de construction", type: "Fournisseur" },
@@ -63,7 +66,7 @@ export const DEMO_FICHES: Fiche[] = [...COLLECTE, ...COLLECTE_AUTO.map((r) => ({
 
 // Prix d'EXEMPLE : montrent le comparateur tant qu'aucun relevé réel n'existe. Aucun fournisseur nommé.
 const prix = (materiau_id: number, slug: string, nom: string, variante: string, unite_achat: string, n: number, p: number, j: number): PrixMateriau => ({
-  materiau_id, slug, nom, variante, unite_achat, professionnel_id: `EX-${n}`, fournisseur: `Relevé d'exemple ${n}`, quartier: null, whatsapp: null,
+  materiau_id, slug, nom, variante, unite_achat, professionnel_id: `EX-${n}`, fournisseur: `Point de vente ${n}`, quartier: null, whatsapp: null,
   prix: p, livraison: null, date_releve: jours(j), ancien: j > 14, le_moins_cher: false, exemple: true,
 });
 

@@ -42,12 +42,15 @@ export function versParams(d: Demande, t?: Tarif): URLSearchParams {
 
 const nombre = (v: string | null | undefined) => (v != null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : undefined);
 
+/** Nombre borné : un lien modifié à la main ne peut pas afficher des valeurs absurdes. */
+const borne = (v: number | undefined, min: number, max: number) => (v != null && v >= min && v <= max ? v : undefined);
+
 export function depuisParams(sp: Record<string, string | undefined>): { d: Demande; t?: Tarif } | null {
-  const litres = nombre(sp.l);
+  const litres = borne(nombre(sp.l), 1, 500);
   if (!sp.id || !sp.lieu || (sp.c !== "essence" && sp.c !== "gazole") || !litres) return null;
   const d: Demande = { id: sp.id.slice(0, 12), lieu: sp.lieu.slice(0, 80), repere: sp.r?.slice(0, 120), carburant: sp.c, litres,
-    lat: nombre(sp.lat), lng: nombre(sp.lng) };
-  const p = nombre(sp.p), km = nombre(sp.km), t = nombre(sp.t);
+    lat: borne(nombre(sp.lat), -90, 90), lng: borne(nombre(sp.lng), -180, 180) };
+  const p = borne(nombre(sp.p), 0, 10000), km = borne(nombre(sp.km), 0, 1000), t = borne(nombre(sp.t), 0, 50000);
   return { d, t: p != null && km != null && t != null ? { prixLitre: p, km, prixKm: t } : undefined };
 }
 

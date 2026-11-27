@@ -27,10 +27,10 @@ export default async function Espace({ searchParams }: { searchParams: Promise<{
           <div className="page" style={{ display: "grid", gap: 16, width: "100%" }}>
             {/* Comme dans les applis mobiles : un seul champ, le compte est créé à la première connexion */}
             <div>
-              <h2 style={{ fontSize: "1.8rem" }}>Bienvenue</h2>
+              <h2 className="titre-ecran">Bienvenue</h2>
               <p className="muet" style={{ margin: "6px 0 0" }}>Entrez votre numéro ou votre e-mail. Vous recevrez un code pour continuer.</p>
             </div>
-            <FormulaireConnexion suite={suite?.startsWith("/") ? suite : "/espace"} canalInitial={canal === "email" ? "email" : canal === "sms" || SMS_DISPONIBLE ? "sms" : "email"} smsDisponible={SMS_DISPONIBLE || modeDemo} />
+            <FormulaireConnexion suite={suite && /^\/(?![\/\\])[^\s\\]{0,200}$/.test(suite) ? suite : "/espace"} canalInitial={canal === "email" ? "email" : canal === "sms" || SMS_DISPONIBLE ? "sms" : "email"} smsDisponible={SMS_DISPONIBLE || modeDemo} />
             <hr style={{ border: 0, borderTop: "1.5px solid var(--liseré)", width: "100%", margin: "8px 0" }} />
             <Link href="/espace/pro" className="carte carte-forte">
               <Briefcase size={40} color="var(--orange)" strokeWidth={1.6} aria-hidden="true" style={{ flex: "none" }} />
